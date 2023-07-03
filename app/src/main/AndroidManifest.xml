@@ -2,9 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-
     <uses-permission android:name="android.permission.READ_ASSISTANT_APP_SEARCH_DATA"/>
     <uses-permission android:name="android.permission.READ_BASIC_PHONE_STATE"/>
     <uses-permission android:name="android.permission.READ_CALENDAR"/>
@@ -23,7 +20,6 @@
     <uses-permission android:name="android.permission.READ_SMS"/>
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
 
-
     <uses-permission android:name="android.permission.WRITE_CALENDAR"/>
     <uses-permission android:name="android.permission.WRITE_CALL_LOG"/>
     <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
@@ -31,8 +27,6 @@
     <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
     <uses-permission android:name="android.permission.WRITE_VOICEMAIL"/>
-
-
 
 
 

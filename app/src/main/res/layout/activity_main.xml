@@ -8,14 +8,72 @@
     tools:context=".MainActivity">
 
 
+
     <TextView
-        android:id="@+id/location_icon"
+        android:id="@+id/runtime_permission"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="권한 Test"
+        android:text="런타임 권한 요청"
+        android:textSize="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.462"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.203" />
+
+
+    <TextView
+        android:id="@+id/write_external_storage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="WRITE_EXTERNAL_STORAGE"
+        android:textSize="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.589"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/runtime_permission"
+        app:layout_constraintVertical_bias="0.206" />
+
+    <TextView
+        android:id="@+id/read_external_storage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="READ_EXTERNAL_STORAGE"
+        android:textSize="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.589"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/runtime_permission"
+        app:layout_constraintVertical_bias="0.464" />
+
+
+    <TextView
+        android:id="@+id/read_media_images"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="READ_MEDIA_IMAGES, VIDEO "
+        android:textSize="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.558"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/runtime_permission"
+        app:layout_constraintVertical_bias="0.624" />
+
+    <TextView
+        android:id="@+id/write_setings_permission"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="WRITE_SETTINGS"
+        android:textSize="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/write_external_storage"
+        app:layout_constraintVertical_bias="0.734" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
