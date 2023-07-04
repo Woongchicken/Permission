@@ -24,6 +24,19 @@
 
 
     <TextView
+        android:id="@+id/test_permission"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="테스트"
+        android:textSize="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.47"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.36" />
+
+    <TextView
         android:id="@+id/write_external_storage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -31,10 +44,10 @@
         android:textSize="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.589"
+        app:layout_constraintHorizontal_bias="0.527"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/runtime_permission"
-        app:layout_constraintVertical_bias="0.206" />
+        app:layout_constraintVertical_bias="0.535" />
 
     <TextView
         android:id="@+id/read_external_storage"
@@ -44,24 +57,9 @@
         android:textSize="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.589"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/runtime_permission"
-        app:layout_constraintVertical_bias="0.464" />
-
-
-    <TextView
-        android:id="@+id/read_media_images"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="READ_MEDIA_IMAGES, VIDEO "
-        android:textSize="20dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.558"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/runtime_permission"
-        app:layout_constraintVertical_bias="0.624" />
+        app:layout_constraintVertical_bias="0.338" />
 
     <TextView
         android:id="@+id/write_setings_permission"
@@ -75,5 +73,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/write_external_storage"
         app:layout_constraintVertical_bias="0.734" />
+
+    <Button
+        android:id="@+id/bitmap_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="비트맵 만들기"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.63"
+        app:layout_constraintStart_toEndOf="@+id/test_permission"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.358" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
