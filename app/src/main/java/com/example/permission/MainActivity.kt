@@ -28,11 +28,13 @@ import java.io.FileOutputStream
 //외부 저장소 - https://ddangeun.tistory.com/58  https://heeeju4lov.tistory.com/50
 
 
-class MainActivity : AppCompatActivity() {
+class    MainActivity : AppCompatActivity() {
 
     private val binding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
     }
+
+    private var deniedCount:Int = 0
 
 
 
@@ -50,7 +52,7 @@ class MainActivity : AppCompatActivity() {
         /* 런타임 권한 체크 */
         binding.runtimePermission.setOnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if(isAllPermissionsGrated()) {
+                if(isAllPermissionsGrated(REQUIRED_PERMISSIONS)) {
                     Snackbar.make(binding.root,"Permission granted", Snackbar.LENGTH_SHORT).show()
                 } else {
 //                requestDangerousPermissions()
@@ -72,19 +74,19 @@ class MainActivity : AppCompatActivity() {
         binding.testPermission.setOnClickListener {
 
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // API 레벨 33(TIRAMISU) 이상
-                if(isReadMediaImagesPermissionsGrated()){
+                if(isAllPermissionsGrated(REQUIRED_MEDIA_IMAGES_PERMISSIONS)){
                     Snackbar.make(binding.root,"READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_MEDIA_AUDIO", Snackbar.LENGTH_SHORT).show()
                 } else {
                     requestPermissionLauncher.launch(REQUIRED_MEDIA_IMAGES_PERMISSIONS)
                 }
             } else if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {    // API 레벨 30(R) 이상
-                if(isReadExternalStoragePermissionsGrated()){
+                if(isAllPermissionsGrated(REQUIRED_MEDIA_IMAGES_PERMISSIONS)){
                     Snackbar.make(binding.root,"READ_EXTERNAL_STORAGE", Snackbar.LENGTH_SHORT).show()
                 } else {
                     requestPermissionLauncher.launch(REQUIRED_READ_EXTERNAL_STORAGE_PERMISSIONS)
                 }
             } else {    // API 레벨 29(Q) 이전
-                if(isAllExternalStoragePermissionsGrated()){
+                if(isAllPermissionsGrated(REQUIRED_MEDIA_IMAGES_PERMISSIONS)){
                     Snackbar.make(binding.root,"READ_EXTERNAL_STORAGE & WRITE_EXTERNAL_STORAGE ", Snackbar.LENGTH_SHORT).show()
                 } else {
                     requestPermissionLauncher.launch(REQUIRED_ALL_EXTERNAL_STORAGE_PERMISSIONS)
@@ -104,14 +106,15 @@ class MainActivity : AppCompatActivity() {
         API 레벨 33(TIRAMISU)부터 -> READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_MEDIA_AUDIO 권한이 대신 적용*/
         binding.readExternalStorage.setOnClickListener {
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if(isReadMediaImagesPermissionsGrated()){
+                if(isAllPermissionsGrated(REQUIRED_MEDIA_IMAGES_PERMISSIONS)){
                     Snackbar.make(binding.root,"READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_MEDIA_AUDIO", Snackbar.LENGTH_SHORT).show()
                 }
                 else {
+                    deniedCount = 0
                     requestPermissionLauncher.launch(REQUIRED_MEDIA_IMAGES_PERMISSIONS)
                 }
             } else {
-                if(isReadExternalStoragePermissionsGrated()){
+                if(isAllPermissionsGrated(REQUIRED_MEDIA_IMAGES_PERMISSIONS)){
                     Snackbar.make(binding.root,"READ_EXTERNAL_STORAGE", Snackbar.LENGTH_SHORT).show()
                 }
                 else {
@@ -134,7 +137,7 @@ class MainActivity : AppCompatActivity() {
                     openManageExternalStorageSettings()
                 }
             } else {
-                if(isWriteExternalStoragePermissionsGrated()){
+                if(isAllPermissionsGrated(REQUIRED_WRITE_EXTERNAL_STORAGE_PERMISSIONS)){
                     Snackbar.make(binding.root,"WRITE_EXTERNAL_STORAGE", Snackbar.LENGTH_SHORT).show()
                 }
                 else {
@@ -171,22 +174,8 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private val REQUIRED_PERMISSIONS : Array<String> = arrayOf(
 
-//            Manifest.permission.READ_CALENDAR,
-//            Manifest.permission.READ_CALL_LOG,
-//            Manifest.permission.READ_CONTACTS,
-//            Manifest.permission.READ_MEDIA_AUDIO,
-//            Manifest.permission.READ_SMS,
-//            Manifest.permission.READ_PHONE_STATE
-//            Manifest.permission.WRITE_CALENDAR,
-//            Manifest.permission.WRITE_CALL_LOG,
             Manifest.permission.WRITE_CONTACTS
 
-
-            /*Build.VERSION_CODES.TIRAMISU 이상*/
-//            Manifest.permission.READ_PHONE_NUMBERS
-
-            /*Build.VERSION_CODES.R 이상*/
-//            Manifest.permission.WRITE_EXTERNAL_STORAGE
         )
 
         private val REQUIRED_READ_EXTERNAL_STORAGE_PERMISSIONS : Array<String> = arrayOf(
@@ -214,10 +203,14 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    val permissions = arrayOf(
+        Manifest.permission.READ_EXTERNAL_STORAGE,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+    )
 
 
     /* 권한 부여 여부 확인 */
-    private fun isAllPermissionsGrated() : Boolean = REQUIRED_PERMISSIONS.all { permission ->      // .all을 써서 REQUIRED_PERMISSIONS의 권한 중 하나라도 권한이 부여가 안 되어있으면 false 반환
+    private fun isAllPermissionsGrated(permissions : Array<String>) : Boolean = permissions.all { permission ->      // .all을 써서 REQUIRED_PERMISSIONS의 권한 중 하나라도 권한이 부여가 안 되어있으면 false 반환
         ContextCompat.checkSelfPermission(this,permission) ==       // 해당 권한이 부여되었는지 확인
                 PackageManager.PERMISSION_GRANTED
     }
@@ -269,7 +262,10 @@ class MainActivity : AppCompatActivity() {
                     }
                     else -> {  // 2번 거부
                         Snackbar.make(binding.root, "Permission denied", Snackbar.LENGTH_SHORT).show()
-                        openSettings()
+                        if (deniedCount < 1){
+                            openSettings()
+                            deniedCount++
+                        }
                     }
 
                 }
@@ -284,34 +280,6 @@ class MainActivity : AppCompatActivity() {
         }.run (::startActivity)
     }
 
-
-    /*READ_EXTERNAL_STORAGE & *WRITE_EXTERNAL_STORAG 권한 체크*/
-    private fun isAllExternalStoragePermissionsGrated() : Boolean = REQUIRED_ALL_EXTERNAL_STORAGE_PERMISSIONS.all { permission ->      // .all을 써서 REQUIRED_PERMISSIONS의 권한 중 하나라도 권한이 부여가 안 되어있으면 false 반환
-        ContextCompat.checkSelfPermission(this,permission) ==       // 해당 권한이 부여되었는지 확인
-                PackageManager.PERMISSION_GRANTED
-    }
-
-
-
-
-    /*READ_EXTERNAL_STORAGE 권한 체크 (READ_EXTERNAL_STORAGE)*/
-    private fun isReadExternalStoragePermissionsGrated() : Boolean = REQUIRED_READ_EXTERNAL_STORAGE_PERMISSIONS.all { permission ->      // .all을 써서 REQUIRED_PERMISSIONS의 권한 중 하나라도 권한이 부여가 안 되어있으면 false 반환
-        ContextCompat.checkSelfPermission(this,permission) ==       // 해당 권한이 부여되었는지 확인
-                PackageManager.PERMISSION_GRANTED
-    }
-
-    /*READ_EXTERNAL_STORAGE 권한 체크 (READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_MEDIA_AUDIO)*/
-    private fun isReadMediaImagesPermissionsGrated() : Boolean = REQUIRED_MEDIA_IMAGES_PERMISSIONS.all { permission ->      // .all을 써서 REQUIRED_PERMISSIONS의 권한 중 하나라도 권한이 부여가 안 되어있으면 false 반환
-        ContextCompat.checkSelfPermission(this,permission) ==       // 해당 권한이 부여되었는지 확인
-                PackageManager.PERMISSION_GRANTED
-    }
-
-
-    /*WRITE_EXTERNAL_STORAGE 권한 체크 (WRITE_EXTERNAL_STORAGE)*/
-    private fun isWriteExternalStoragePermissionsGrated() : Boolean = REQUIRED_WRITE_EXTERNAL_STORAGE_PERMISSIONS.all { permission ->      // .all을 써서 REQUIRED_PERMISSIONS의 권한 중 하나라도 권한이 부여가 안 되어있으면 false 반환
-        ContextCompat.checkSelfPermission(this,permission) ==       // 해당 권한이 부여되었는지 확인
-                PackageManager.PERMISSION_GRANTED
-    }
 
     /*MANAGE_EXTERNAL_STORAGE 권한 체크 */
     @RequiresApi(Build.VERSION_CODES.R)
@@ -398,11 +366,6 @@ class MainActivity : AppCompatActivity() {
         }
         return false
     }
-
-
-
-
-
 
 
 
