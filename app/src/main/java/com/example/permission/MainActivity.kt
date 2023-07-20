@@ -2,6 +2,8 @@ package com.example.permission
 
 import android.os.Bundle
 import android.Manifest
+import android.app.Activity
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,6 +12,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -22,11 +25,14 @@ import com.example.permission.databinding.ActivityMainBinding
 import com.google.android.material.snackbar.Snackbar
 import java.io.File
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+
+// Android 13 (API 33) - READ_EXTERNAL_STORAGE의 권한 세분화 -> (이미지/사진 - READ_MEDIA_IMAGES  동영상 - READ_MEDIA_VIDEO  오디오 - READ_MEDIA_AUDIO)  https://developer.android.com/about/versions/13/behavior-changes-13?hl=ko
+// Android 11 (API 30) - Target SDK 버전과 관계없이 모든 앱에 Scoped mode를 적용, 기존 권한(WRITE_EXTERNAL_STORAGE)이 무시 됌. MediaStore로 파일 저장 가능
+// Android 10 (API 29) 이전 - READ_EXTERNAL_STORAGE / WRITE_EXTERNAL_STORAGE를 구분하여 사용
 
 
-//비트맵 - https://devsmin.tistory.com/27
-//외부 저장소 - https://ddangeun.tistory.com/58  https://heeeju4lov.tistory.com/50
-
+//사진 저장 & 갖고오기 (외부 저장소) - https://lab.cliel.com/283
 
 class    MainActivity : AppCompatActivity() {
 
@@ -43,110 +49,13 @@ class    MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        saveImageToGallery()
-
-//        binding.bitmapButton.setOnClickListener {
-//            saveImageToGallery()
-//        }
-
-        /* 런타임 권한 체크 */
-        binding.runtimePermission.setOnClickListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if(isAllPermissionsGrated(REQUIRED_PERMISSIONS)) {
-                    Snackbar.make(binding.root,"Permission granted", Snackbar.LENGTH_SHORT).show()
-                } else {
-//                requestDangerousPermissions()
-                    requestPermissionLauncher.launch(REQUIRED_PERMISSIONS)
-                }
-            } else {
-                // 안드로이드 버전이 M 미만이므로 권한을 부여할 필요 없음
-                Snackbar.make(binding.root, "Permission granted", Snackbar.LENGTH_SHORT).show()
-            }
+        binding.buttonCamera.setOnClickListener{
+            callCamera()
         }
 
-
-
-
-//        API 레벨 29(Q) 이전 - READ_EXTERNAL_STORAGE / WRITE_EXTERNAL_STORAGE 를 구분하여 사용
-//        API 레벨 30(R) 이상 - WRITE_EXTERNAL_STORAGE 대신 READ_EXTERNAL_STORAGE만 요청
-//        API 레벨 33(TIRAMISU) 이상 - READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_MEDIA_AUDIO 나눠서 요청
-
-        binding.testPermission.setOnClickListener {
-
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // API 레벨 33(TIRAMISU) 이상
-                if(isAllPermissionsGrated(REQUIRED_MEDIA_IMAGES_PERMISSIONS)){
-                    Snackbar.make(binding.root,"READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_MEDIA_AUDIO", Snackbar.LENGTH_SHORT).show()
-                } else {
-                    requestPermissionLauncher.launch(REQUIRED_MEDIA_IMAGES_PERMISSIONS)
-                }
-            } else if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {    // API 레벨 30(R) 이상
-                if(isAllPermissionsGrated(REQUIRED_MEDIA_IMAGES_PERMISSIONS)){
-                    Snackbar.make(binding.root,"READ_EXTERNAL_STORAGE", Snackbar.LENGTH_SHORT).show()
-                } else {
-                    requestPermissionLauncher.launch(REQUIRED_READ_EXTERNAL_STORAGE_PERMISSIONS)
-                }
-            } else {    // API 레벨 29(Q) 이전
-                if(isAllPermissionsGrated(REQUIRED_MEDIA_IMAGES_PERMISSIONS)){
-                    Snackbar.make(binding.root,"READ_EXTERNAL_STORAGE & WRITE_EXTERNAL_STORAGE ", Snackbar.LENGTH_SHORT).show()
-                } else {
-                    requestPermissionLauncher.launch(REQUIRED_ALL_EXTERNAL_STORAGE_PERMISSIONS)
-                }
-            }
-
+        binding.buttonGallery.setOnClickListener{
+            getAlbum()
         }
-
-
-
-
-
-
-
-//@ READ_EXTERNAL_STORAGE = WRITE_EXTERNAL_STORAGE 동일 권한?
-/*        READ_EXTERNAL_STORAGE
-        API 레벨 33(TIRAMISU)부터 -> READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_MEDIA_AUDIO 권한이 대신 적용*/
-        binding.readExternalStorage.setOnClickListener {
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if(isAllPermissionsGrated(REQUIRED_MEDIA_IMAGES_PERMISSIONS)){
-                    Snackbar.make(binding.root,"READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_MEDIA_AUDIO", Snackbar.LENGTH_SHORT).show()
-                }
-                else {
-                    deniedCount = 0
-                    requestPermissionLauncher.launch(REQUIRED_MEDIA_IMAGES_PERMISSIONS)
-                }
-            } else {
-                if(isAllPermissionsGrated(REQUIRED_MEDIA_IMAGES_PERMISSIONS)){
-                    Snackbar.make(binding.root,"READ_EXTERNAL_STORAGE", Snackbar.LENGTH_SHORT).show()
-                }
-                else {
-                    requestPermissionLauncher.launch(REQUIRED_READ_EXTERNAL_STORAGE_PERMISSIONS)
-                }
-            }
-        }
-
-
-
-/*         WRITE_EXTERNAL_STORAGE
-        API 레벨 30(R)부터 -> 이 권한은 적용되지 않음 MANAGE_EXTERNAL_STORAGE 권한 사용 */
-
-        binding.writeExternalStorage.setOnClickListener {
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                if(isManageExternalStoragePermissionGranted()){
-                    Snackbar.make(binding.root,"MANAGE_EXTERNAL_STORAGE", Snackbar.LENGTH_SHORT).show()
-                }
-                else {
-                    openManageExternalStorageSettings()
-                }
-            } else {
-                if(isAllPermissionsGrated(REQUIRED_WRITE_EXTERNAL_STORAGE_PERMISSIONS)){
-                    Snackbar.make(binding.root,"WRITE_EXTERNAL_STORAGE", Snackbar.LENGTH_SHORT).show()
-                }
-                else {
-                    requestPermissionLauncher.launch(REQUIRED_WRITE_EXTERNAL_STORAGE_PERMISSIONS)
-                }
-            }
-        }
-
-
 
 
 
@@ -165,48 +74,15 @@ class    MainActivity : AppCompatActivity() {
         }
 
 
-
-
     }
 
 
-    /* 권한 명시 */
-    companion object {
-        private val REQUIRED_PERMISSIONS : Array<String> = arrayOf(
 
-            Manifest.permission.WRITE_CONTACTS
-
-        )
-
-        private val REQUIRED_READ_EXTERNAL_STORAGE_PERMISSIONS : Array<String> = arrayOf(
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        )
-
-        private val REQUIRED_MEDIA_IMAGES_PERMISSIONS : Array<String> = arrayOf(
-            Manifest.permission.READ_MEDIA_IMAGES,
-            Manifest.permission.READ_MEDIA_VIDEO,
-            Manifest.permission.READ_MEDIA_AUDIO
-        )
-
-        private val REQUIRED_WRITE_EXTERNAL_STORAGE_PERMISSIONS : Array<String> = arrayOf(
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-        )
-
-        private val REQUIRED_ALL_EXTERNAL_STORAGE_PERMISSIONS : Array<String> = arrayOf(
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-        )
-
-
-
-        private const val REQUEST_CODE_PERMISSIONS = 1001
-    }
-
-
-    val permissions = arrayOf(
-        Manifest.permission.READ_EXTERNAL_STORAGE,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE
-    )
+    val CAMERA = arrayOf(Manifest.permission.CAMERA)
+    val READ = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+    val WRITE = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    val STORAGE = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    val IMAGES = arrayOf(Manifest.permission.READ_MEDIA_IMAGES,)
 
 
     /* 권한 부여 여부 확인 */
@@ -214,39 +90,6 @@ class    MainActivity : AppCompatActivity() {
         ContextCompat.checkSelfPermission(this,permission) ==       // 해당 권한이 부여되었는지 확인
                 PackageManager.PERMISSION_GRANTED
     }
-
-
-    /* 권한 요청 */
-//    private  fun requestDangerousPermissions() {
-//        ActivityCompat.requestPermissions(
-//            this,REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
-//        )
-//
-//    }
-
-    /* 권한 요청에 대한 콜백 */
-            // onRequestPermissionsResult - androidx.activity 버전 1.2.0 - deprecated
-//    @RequiresApi(Build.VERSION_CODES.M)
-//    override fun onRequestPermissionsResult(        // ActivityCompat.requestPermissions을 요청하면 결과를 콜백으로 받음
-//        requestCode: Int,
-//        permissions: Array<out String>,
-//        grantResults: IntArray
-//    ) {
-//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-//        if (requestCode == REQUEST_CODE_PERMISSIONS) {
-//            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {        // 모든 권한이 취득된 경우
-//                Snackbar.make(binding.root,"Permission granted", Snackbar.LENGTH_SHORT).show()
-//            } else {
-//                if (shouldShowRequestPermissionRationale(REQUIRED_PERMISSIONS[0])) {        // 권한을 다시 요청
-//                    Snackbar.make(binding.root,"Permission required to use app!", Snackbar.LENGTH_SHORT).show()
-//                    requestDangerousPermissions()
-//                } else {
-//                    Snackbar.make(binding.root, "Permission denied", Snackbar.LENGTH_SHORT).show()      // 그럼에도 유저가 거절하면, 앱은 권한을 더 이상 요청을 못함. 권한 요청을 2번하면 유저가 직접 셋팅에서 권한 설정
-//                    openSetings()       // 권한 설정 화면 띄워줌
-//                }
-//            }
-//        }
-//    }
 
     /* 계약서 전달 방식 */
     @RequiresApi(Build.VERSION_CODES.M)
@@ -273,27 +116,155 @@ class    MainActivity : AppCompatActivity() {
         }
 
 
-    /* 권한 설정 화면 */
+    fun checkPermission(permissions: Array<String>): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if(isAllPermissionsGrated(permissions)){
+                return true
+            } else {
+                deniedCount = 0
+                requestPermissionLauncher.launch(permissions)
+                return false
+            }
+        }
+        return true;
+    }
+
+
+    /* 카메라 기능 */
+    fun callCamera() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (checkPermission(CAMERA)) {
+                val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                takePictureLauncher.launch(takePictureIntent)
+//                startActivityForResult(takePictureIntent, CAMERA_CODE)
+            }
+        } else  {
+            if (checkPermission(CAMERA) && checkPermission(WRITE)) {
+                val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                takePictureLauncher.launch(takePictureIntent)
+            }
+        }
+    }
+
+
+
+    /* 파일 이름 정하기 */
+    fun randomFileName() : String {
+        val fineName = this.getString(R.string.app_name) + SimpleDateFormat("yyyyMMddHHmmss").format(System.currentTimeMillis())
+        return fineName
+    }
+
+
+
+    /* 사진을 찍으면 사진 파일을 저장하고 저장된 사진을 불러오도록 */
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+//        super.onActivityResult(requestCode, resultCode, data)
+//
+//        if (resultCode == Activity.RESULT_OK) {
+//            when (requestCode) {
+//                CAMERA_CODE -> {
+//                    if (data?.extras?.get("data") != null) {
+//                        val img = data?.extras?.get("data") as Bitmap
+//                        val uri = saveFile(RandomFileName(), "image/jpeg", img)
+//                        binding.imageView.setImageURI(uri)
+//                    }
+//                }
+//
+//                STORAGE_CODE -> {
+//                    val uri = data?.data
+//                    binding.imageView.setImageURI(uri)
+//                }
+//
+//            }
+//        }
+//    }
+
+
+    private val takePictureLauncher: ActivityResultLauncher<Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val data: Intent? = result.data
+                if (data?.extras?.get("data") != null) {
+                    val img = data.extras?.get("data") as Bitmap
+                    val uri = saveFile(randomFileName(), "image/jpeg", img)
+                    binding.imageView.setImageURI(uri)
+                }
+
+            }
+        }
+
+
+    private val pickImageLauncher: ActivityResultLauncher<Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val data: Intent? = result.data
+                val uri = data?.data
+                binding.imageView.setImageURI(uri)
+            }
+        }
+
+
+    /* 파일 저장 */
+    fun saveFile(fileName: String, mimeType: String, bitmap: Bitmap): Uri? {
+        var CV = ContentValues()
+        CV.put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+        CV.put(MediaStore.Images.Media.MIME_TYPE, mimeType)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            CV.put(MediaStore.Images.Media.IS_PENDING, 1)
+        }
+
+        val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, CV)
+
+        if (uri != null) {
+            var scriptor = contentResolver.openFileDescriptor(uri, "w")
+
+            if (scriptor != null) {
+                val fos = FileOutputStream(scriptor.fileDescriptor)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)
+                fos.close()
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    CV.clear()
+                    CV.put(MediaStore.Images.Media.IS_PENDING, 0)
+                    contentResolver.update(uri, CV, null, null)
+                }
+            }
+        }
+
+        return uri;
+    }
+
+
+    /*갤러리*/
+    fun getAlbum() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkPermission(IMAGES)) {
+                val intent = Intent(Intent.ACTION_PICK)
+                intent.type = MediaStore.Images.Media.CONTENT_TYPE
+                pickImageLauncher.launch(intent)
+
+            }
+        } else  {
+            if (checkPermission(READ)) {
+                val intent = Intent(Intent.ACTION_PICK)
+                intent.type = MediaStore.Images.Media.CONTENT_TYPE
+                pickImageLauncher.launch(intent)
+            }
+        }
+    }
+
+
+
+
+
+        /* 권한 설정 화면 */
     private fun openSettings() {
         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
             data = Uri.fromParts("package",packageName,null)
         }.run (::startActivity)
     }
 
-
-    /*MANAGE_EXTERNAL_STORAGE 권한 체크 */
-    @RequiresApi(Build.VERSION_CODES.R)
-    private fun isManageExternalStoragePermissionGranted(): Boolean {
-        return Environment.isExternalStorageManager()
-    }
-
-
-    /*MANAGE_EXTERNAL_STORAGE 권한 설정*/
-    private fun openManageExternalStorageSettings() {
-        Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
-            data = Uri.fromParts("package",packageName,null)
-        }.run (::startActivity)
-    }
 
 
 
@@ -310,63 +281,10 @@ class    MainActivity : AppCompatActivity() {
     }
 
 
-    private fun saveImageToGallery(){
-        binding.bitmapButton.setOnClickListener {
-            //권한 체크
-
-//            if(!isReadExternalStoragePermissionsGrated() || !isWriteExternalStoragePermissionsGrated()){
-//                Toast.makeText(this, "권한이 없습니다.", Toast.LENGTH_SHORT).show()
-//                return@setOnClickListener
-//            }
-
-            //그림 저장
-            val bitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.test)
-            if(!imageExternalSave(this, bitmap, this.getString(R.string.app_name))){
-                Toast.makeText(this, "그림 저장을 실패하였습니다", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            Toast.makeText(this, "그림이 갤러리에 저장되었습니다", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-
-    fun imageExternalSave(context: Context, bitmap: Bitmap, path: String): Boolean {
-        val state = Environment.getExternalStorageState()
-        if (Environment.MEDIA_MOUNTED == state) {
-
-            val rootPath =
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-                    .toString()
-            val dirName = "/" + path
-            val fileName = System.currentTimeMillis().toString() + ".png"
-            val savePath = File(rootPath + dirName)
-            savePath.mkdirs()
-
-            val file = File(savePath, fileName)
-            if (file.exists()) file.delete()
-
-            try {
-                val out = FileOutputStream(file)
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-                out.flush()
-                out.close()
-
-                //갤러리 갱신
-                context.sendBroadcast(
-                    Intent(
-                        Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
-                        Uri.parse("file://" + Environment.getExternalStorageDirectory())
-                    )
-                )
-                return true
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-        return false
-    }
-
 
 
 }
+
+
+
+
