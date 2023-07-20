@@ -27,6 +27,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 
+// 7.21
 // Android 13 (API 33) - READ_EXTERNAL_STORAGE의 권한 세분화 -> (이미지/사진 - READ_MEDIA_IMAGES  동영상 - READ_MEDIA_VIDEO  오디오 - READ_MEDIA_AUDIO)  https://developer.android.com/about/versions/13/behavior-changes-13?hl=ko
 // Android 11 (API 30) - Target SDK 버전과 관계없이 모든 앱에 Scoped mode를 적용, 기존 권한(WRITE_EXTERNAL_STORAGE)이 무시 됌. MediaStore로 파일 저장 가능
 // Android 10 (API 29) 이전 - READ_EXTERNAL_STORAGE / WRITE_EXTERNAL_STORAGE를 구분하여 사용
